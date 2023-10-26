@@ -1,17 +1,16 @@
 package io.github.thebusybiscuit.slimefun4.implementation.resources;
 
-import org.bukkit.World.Environment;
-import org.bukkit.block.Biome;
-
 import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.geo.GEOResource;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.biomes.BiomeMap;
+import org.bukkit.World.Environment;
+import org.bukkit.block.Biome;
 
 /**
  * A {@link GEOResource} which consists of small chunks of Uranium.
- * 
+ *
  * @author TheBusyBiscuit
  *
  */
@@ -22,7 +21,7 @@ class UraniumResource extends AbstractResource {
     private final BiomeMap<Integer> biomes;
 
     UraniumResource() {
-        super("uranium", "Small Chunks of Uranium", SlimefunItems.SMALL_URANIUM, 2, true);
+        super("uranium", "小块铀", SlimefunItems.SMALL_URANIUM, 2, true);
 
         MinecraftVersion version = Slimefun.getMinecraftVersion();
 
@@ -45,5 +44,4 @@ class UraniumResource extends AbstractResource {
             return biomes.getOrDefault(biome, DEFAULT_OVERWORLD_VALUE);
         }
     }
-
 }

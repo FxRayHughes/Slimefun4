@@ -1,21 +1,19 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.accelerators;
 
-import org.bukkit.Particle;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Ageable;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
+import org.bukkit.Particle;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 
 public class AnimalGrowthAccelerator extends AbstractGrowthAccelerator {
 
@@ -25,7 +23,8 @@ public class AnimalGrowthAccelerator extends AbstractGrowthAccelerator {
     // We wanna strip the Slimefun Item id here
     private static final ItemStack organicFood = ItemStackWrapper.wrap(SlimefunItems.ORGANIC_FOOD);
 
-    public AnimalGrowthAccelerator(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
+    public AnimalGrowthAccelerator(
+            ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
     }
 
@@ -36,7 +35,7 @@ public class AnimalGrowthAccelerator extends AbstractGrowthAccelerator {
 
     @Override
     protected void tick(Block b) {
-        BlockMenu inv = BlockStorage.getInventory(b);
+        BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
 
         for (Entity n : b.getWorld().getNearbyEntities(b.getLocation(), RADIUS, RADIUS, RADIUS, this::isReadyToGrow)) {
             for (int slot : getInputSlots()) {
@@ -54,7 +53,9 @@ public class AnimalGrowthAccelerator extends AbstractGrowthAccelerator {
                         ageable.setAge(0);
                     }
 
-                    n.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, ((LivingEntity) n).getEyeLocation(), 8, 0.2F, 0.2F, 0.2F);
+                    n.getWorld()
+                            .spawnParticle(
+                                    Particle.VILLAGER_HAPPY, ((LivingEntity) n).getEyeLocation(), 8, 0.2F, 0.2F, 0.2F);
                     return;
                 }
             }
@@ -64,5 +65,4 @@ public class AnimalGrowthAccelerator extends AbstractGrowthAccelerator {
     private boolean isReadyToGrow(Entity n) {
         return n instanceof Ageable ageable && n.isValid() && !ageable.isAdult();
     }
-
 }

@@ -1,21 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import dev.lone.itemsadder.api.CustomBlock;
-import org.bukkit.Bukkit;
-import org.bukkit.Effect;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.inventory.ItemStack;
-
 import io.github.bakedlibs.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.api.events.ExplosiveToolBreakBlocksEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -31,8 +17,18 @@ import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.Bukkit;
+import org.bukkit.Effect;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * This {@link SlimefunItem} is a super class for items like the {@link ExplosivePickaxe} or {@link ExplosiveShovel}.
@@ -74,7 +70,8 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
     }
 
     @ParametersAreNonnullByDefault
-    private void breakBlocks(BlockBreakEvent e, Player p, ItemStack item, Block b, List<Block> blocks, List<ItemStack> drops) {
+    private void breakBlocks(
+            BlockBreakEvent e, Player p, ItemStack item, Block b, List<Block> blocks, List<ItemStack> drops) {
         List<Block> blocksToDestroy = new ArrayList<>();
 
         if (callExplosionEvent.getValue()) {
@@ -157,7 +154,8 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
         Material material = b.getType();
 
         b.getWorld().playEffect(b.getLocation(), Effect.STEP_SOUND, material);
-        SlimefunItem sfItem = BlockStorage.check(b);
+        var loc = b.getLocation();
+        SlimefunItem sfItem = StorageCacheUtils.getSfItem(loc);
 
         if (sfItem != null && !sfItem.useVanillaBlockBreaking()) {
             /*
@@ -177,7 +175,7 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
             if (!dummyEvent.isCancelled()) {
                 drops.addAll(sfItem.getDrops(p));
                 b.setType(Material.AIR);
-                BlockStorage.clearBlockInfo(b);
+                Slimefun.getDatabaseManager().getBlockDataController().removeBlock(loc);
             }
         } else {
             b.breakNaturally(item);
@@ -185,5 +183,4 @@ public class ExplosiveTool extends SimpleSlimefunItem<ToolUseHandler> implements
 
         damageItem(p, item);
     }
-
 }

@@ -1,12 +1,10 @@
 package me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems;
 
-import java.util.function.Predicate;
-
-import org.apache.commons.lang.Validate;
-import org.bukkit.inventory.ItemStack;
-
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
+import java.util.function.Predicate;
+import org.apache.commons.lang.Validate;
+import org.bukkit.inventory.ItemStack;
 
 // This class will be rewritten in the "Recipe Rewrite"
 public class MachineFuel implements Predicate<ItemStack> {
@@ -43,7 +41,7 @@ public class MachineFuel implements Predicate<ItemStack> {
     /**
      * This method returns how long this {@link MachineFuel} lasts.
      * The result represents Slimefun ticks.
-     * 
+     *
      * @return How many ticks this fuel type lasts
      */
     public int getTicks() {
@@ -54,5 +52,4 @@ public class MachineFuel implements Predicate<ItemStack> {
     public boolean test(ItemStack item) {
         return SlimefunUtils.isItemSimilar(item, wrapper, true);
     }
-
 }

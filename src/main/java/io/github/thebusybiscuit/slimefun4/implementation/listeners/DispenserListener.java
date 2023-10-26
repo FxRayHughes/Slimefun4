@@ -1,7 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.handlers.BlockDispenseHandler;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -12,20 +16,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.core.handlers.BlockDispenseHandler;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.papermc.lib.PaperLib;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
-
 /**
  * This {@link Listener} listens to the {@link BlockDispenseEvent} and calls the
  * {@link BlockDispenseHandler} as a result of that.
- * 
+ *
  * @author TheBusyBiscuit
  * @author MisterErwin
- * 
+ *
  * @see BlockDispenseHandler
  *
  */
@@ -40,7 +37,8 @@ public class DispenserListener implements Listener {
         Block b = e.getBlock();
 
         if (b.getType() == Material.DISPENSER && b.getRelative(BlockFace.DOWN).getType() != Material.HOPPER) {
-            SlimefunItem machine = BlockStorage.check(b);
+            var blockData = StorageCacheUtils.getBlock(b.getLocation());
+            SlimefunItem machine = blockData == null ? null : SlimefunItem.getById(blockData.getSfId());
 
             // Fixes #2959
             if (machine != null && !machine.isDisabledIn(e.getBlock().getWorld())) {

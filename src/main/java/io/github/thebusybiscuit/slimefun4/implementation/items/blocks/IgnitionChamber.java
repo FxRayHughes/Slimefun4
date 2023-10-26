@@ -1,9 +1,18 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.handlers.VanillaInventoryDropHandler;
+import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.Smeltery;
+import io.papermc.lib.PaperLib;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.lang.Validate;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,36 +26,21 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.handlers.VanillaInventoryDropHandler;
-import io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.Smeltery;
-import io.papermc.lib.PaperLib;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
-
 /**
  * The {@link IgnitionChamber} is used to re-ignite a {@link Smeltery}.
- * 
+ *
  * @author AtomicScience
  * @author TheBusyBiscuit
- * 
+ *
  * @see Smeltery
  *
  */
 public class IgnitionChamber extends SlimefunItem {
 
     // @formatter:off
-    private static final BlockFace[] ADJACENT_FACES = {
-        BlockFace.NORTH,
-        BlockFace.EAST,
-        BlockFace.SOUTH,
-        BlockFace.WEST
+    private static final BlockFace[] ADJACENT_FACES = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
     };
+
     // @formatter:on
 
     @ParametersAreNonnullByDefault
@@ -59,12 +53,12 @@ public class IgnitionChamber extends SlimefunItem {
     /**
      * This triggers an {@link IgnitionChamber} to be used from the given {@link Smeltery}
      * block and {@link Player}.
-     * 
+     *
      * @param p
      *            The {@link Player} who triggered this action
      * @param smelteryBlock
      *            The {@link Dispenser} block of our {@link Smeltery}
-     * 
+     *
      * @return Whether the operation completed successfully.
      *         This will return <code>false</code> when there is no
      *         chamber or no flint and steel present
@@ -113,8 +107,10 @@ public class IgnitionChamber extends SlimefunItem {
         for (BlockFace face : ADJACENT_FACES) {
             Block block = b.getRelative(face);
 
-            if (block.getType() == Material.DROPPER && BlockStorage.check(block) instanceof IgnitionChamber) {
-                BlockState state = PaperLib.getBlockState(b.getRelative(face), false).getState();
+            if (block.getType() == Material.DROPPER
+                    && StorageCacheUtils.getSfItem(block.getLocation()) instanceof IgnitionChamber) {
+                BlockState state =
+                        PaperLib.getBlockState(b.getRelative(face), false).getState();
 
                 if (state instanceof Dropper dropper) {
                     return dropper.getInventory();
@@ -124,5 +120,4 @@ public class IgnitionChamber extends SlimefunItem {
 
         return null;
     }
-
 }

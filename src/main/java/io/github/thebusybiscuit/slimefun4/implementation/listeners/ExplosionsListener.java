@@ -1,38 +1,33 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.core.attributes.WitherProof;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * The {@link ExplosionsListener} is a {@link Listener} which listens to any explosion events.
  * Any {@link WitherProof} block is excluded from these explosions and this {@link Listener} also
  * calls the explosive part of the {@link BlockBreakHandler}.
- * 
+ *
  * @author TheBusyBiscuit
- * 
+ *
  * @see BlockBreakHandler
  * @see WitherProof
  *
@@ -53,51 +48,50 @@ public class ExplosionsListener implements Listener {
         removeResistantBlocks(e.blockList().iterator());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onEntityBreak(EntityChangeBlockEvent e) {
-        if (e.getEntity().getType() == EntityType.WITHER || e.getEntity().getType() == EntityType.WITHER_SKULL) {
-            removeResistantBlock(e.getBlock());
-        }
-    }
-
     private void removeResistantBlocks(@Nonnull Iterator<Block> blocks) {
         while (blocks.hasNext()) {
             Block block = blocks.next();
-            SlimefunItem item = BlockStorage.check(block);
+            var loc = block.getLocation();
+            var blockData = StorageCacheUtils.getBlock(loc);
+            SlimefunItem item = blockData == null ? null : SlimefunItem.getById(blockData.getSfId());
 
             if (item != null) {
                 blocks.remove();
-                removeResistantBlock(block, item);
+
+                var controller = Slimefun.getDatabaseManager().getBlockDataController();
+                if (!(item instanceof WitherProof)
+                        && !item.callItemHandler(BlockBreakHandler.class, handler -> {
+                            if (blockData.isDataLoaded()) {
+                                handleExplosion(handler, block);
+                            } else {
+                                controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
+                                    @Override
+                                    public boolean runOnMainThread() {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public void onResult(SlimefunBlockData result) {
+                                        handleExplosion(handler, block);
+                                    }
+                                });
+                            }
+                        })) {
+                    controller.removeBlock(loc);
+                    block.setType(Material.AIR);
+                }
             }
-        }
-    }
-
-    private void removeResistantBlock(@Nonnull Block block) {
-        SlimefunItem slimefunItem = BlockStorage.check(block);
-
-        if (slimefunItem != null) {
-            removeResistantBlock(block, slimefunItem);
-        }
-    }
-
-    private void removeResistantBlock(@Nonnull Block block, @Nonnull SlimefunItem slimefunItem) {
-        // Fixes #3414 - This check removes the ghost block created by withers.
-        if (!(slimefunItem instanceof WitherProof)
-            && !slimefunItem.callItemHandler(BlockBreakHandler.class, handler -> handleExplosion(handler, block))
-        ) {
-            BlockStorage.clearBlockInfo(block);
-            block.setType(Material.AIR);
         }
     }
 
     @ParametersAreNonnullByDefault
     private void handleExplosion(BlockBreakHandler handler, Block block) {
         if (handler.isExplosionAllowed(block)) {
-            BlockStorage.clearBlockInfo(block);
             block.setType(Material.AIR);
 
             List<ItemStack> drops = new ArrayList<>();
             handler.onExplode(block, drops);
+            Slimefun.getDatabaseManager().getBlockDataController().removeBlock(block.getLocation());
 
             for (ItemStack drop : drops) {
                 if (drop != null && !drop.getType().isAir()) {

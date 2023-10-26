@@ -1,20 +1,28 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import io.github.bakedlibs.dough.items.CustomItemStack;
+import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+import io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans.MagicianTalisman;
+import io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans.Talisman;
+import io.github.thebusybiscuit.slimefun4.implementation.settings.TalismanEnchantment;
+import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.AbstractHorse;
+import org.bukkit.entity.Allay;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.ChestedHorse;
 import org.bukkit.entity.Item;
@@ -22,6 +30,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Ravager;
+import org.bukkit.entity.Steerable;
 import org.bukkit.entity.Trident;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -38,35 +47,28 @@ import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.LlamaInventory;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
-import io.github.bakedlibs.dough.items.CustomItemStack;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
-import io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans.MagicianTalisman;
-import io.github.thebusybiscuit.slimefun4.implementation.items.magical.talismans.Talisman;
-import io.github.thebusybiscuit.slimefun4.implementation.settings.TalismanEnchantment;
-import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-
 /**
  * This {@link Listener} is responsible for handling any {@link Event}
  * that is required for activating a {@link Talisman}.
- * 
+ *
  * @author TheBusyBiscuit
  * @author StarWishsama
  * @author svr333
  * @author martinbrom
  * @author Sfiguz7
- * 
+ *
  * @see Talisman
  *
  */
 public class TalismanListener implements Listener {
 
-    private final int[] armorSlots = { 39, 38, 37, 36 };
+    private final int[] armorSlots = {39, 38, 37, 36};
 
     public TalismanListener(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -123,7 +125,7 @@ public class TalismanListener implements Listener {
     /**
      * This method is used for the {@link Talisman} of the whirlwind, it returns a copy
      * of a {@link Projectile} that was fired at a {@link Player}.
-     * 
+     *
      * @param p
      *            The {@link Player} who was hit
      * @param projectile
@@ -161,6 +163,13 @@ public class TalismanListener implements Listener {
              * We absolutely don't want to double the
              * drops from players or ArmorStands
              */
+            return;
+        }
+
+        /*
+         * Return because allay is so cute, DO NOT KILL THEM.
+         */
+        if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_19) && entity instanceof Allay) {
             return;
         }
 
@@ -209,7 +218,7 @@ public class TalismanListener implements Listener {
         /*
          * WARNING: This check is broken as entities now set their
          * equipment to NULL before calling the event!
-         * 
+         *
          * It prevents duplication of handheld items or armor.
          */
         EntityEquipment equipment = entity.getEquipment();
@@ -221,6 +230,21 @@ public class TalismanListener implements Listener {
 
             items.remove(equipment.getItemInMainHand());
             items.remove(equipment.getItemInOffHand());
+        }
+
+        if (entity instanceof AbstractHorse abstractHorse) {
+            var inventory = abstractHorse.getInventory();
+            items.remove(inventory.getSaddle());
+
+            if (inventory instanceof LlamaInventory llamaInventory) {
+                items.remove(llamaInventory.getDecor());
+            } else if (inventory.getItem(1) != null) {
+                items.remove(inventory.getItem(1));
+            }
+        }
+
+        if (entity instanceof Steerable steerable && steerable.hasSaddle()) {
+            items.remove(new ItemStack(Material.SADDLE));
         }
 
         return items;
@@ -289,7 +313,7 @@ public class TalismanListener implements Listener {
         if (enchantment != null && Talisman.trigger(e, SlimefunItems.TALISMAN_MAGICIAN)) {
             /*
              * Fixes #2679
-             * 
+             *
              * By default, the Bukkit API doesn't allow us to give enchantment books
              * extra enchantments.
              */
@@ -301,7 +325,9 @@ public class TalismanListener implements Listener {
         }
 
         // Wizard Talisman
-        if (!enchantments.containsKey(Enchantment.SILK_TOUCH) && Enchantment.LOOT_BONUS_BLOCKS.canEnchantItem(e.getItem()) && Talisman.trigger(e, SlimefunItems.TALISMAN_WIZARD)) {
+        if (!enchantments.containsKey(Enchantment.SILK_TOUCH)
+                && Enchantment.LOOT_BONUS_BLOCKS.canEnchantItem(e.getItem())
+                && Talisman.trigger(e, SlimefunItems.TALISMAN_WIZARD)) {
             // Randomly lower some enchantments
             for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
                 if (entry.getValue() > 1 && random.nextInt(100) < 40) {
@@ -346,7 +372,8 @@ public class TalismanListener implements Listener {
         }
     }
 
-    private void doubleTalismanDrops(BlockDropItemEvent e, SlimefunItemStack talismanItemStack, SlimefunTag tag, Material type, ItemMeta meta) {
+    private void doubleTalismanDrops(
+            BlockDropItemEvent e, SlimefunItemStack talismanItemStack, SlimefunTag tag, Material type, ItemMeta meta) {
         if (tag.isTagged(type)) {
             Collection<Item> drops = e.getItems();
 
@@ -363,7 +390,10 @@ public class TalismanListener implements Listener {
                     // We do not want to dupe blocks
                     if (!droppedItem.getType().isBlock()) {
                         int amount = Math.max(1, (dropAmount * 2) - droppedItem.getAmount());
-                        e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), new CustomItemStack(droppedItem, amount));
+                        e.getBlock()
+                                .getWorld()
+                                .dropItemNaturally(
+                                        e.getBlock().getLocation(), new CustomItemStack(droppedItem, amount));
                         doubledDrops = true;
                     }
                 }

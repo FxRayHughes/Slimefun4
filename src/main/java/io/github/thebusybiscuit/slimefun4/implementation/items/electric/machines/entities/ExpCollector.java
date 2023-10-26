@@ -1,18 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.entities;
 
-import java.util.Iterator;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ExperienceOrb;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
@@ -25,24 +14,31 @@ import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNetComponen
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.SimpleBlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.magical.KnowledgeFlask;
-
-import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
+import java.util.Iterator;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * The {@link ExpCollector} is a machine which picks up any nearby {@link ExperienceOrb}
  * and produces a {@link KnowledgeFlask}.
- * 
+ *
  * @author TheBusyBiscuit
  *
  */
 public class ExpCollector extends SlimefunItem implements InventoryBlock, EnergyNetComponent {
 
-    private final int[] border = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
+    private final int[] border = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
 
     private static final int ENERGY_CONSUMPTION = 10;
     private static final String DATA_KEY = "stored-exp";
@@ -62,7 +58,10 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
 
             @Override
             public void onPlayerPlace(BlockPlaceEvent e) {
-                BlockStorage.addBlockInfo(e.getBlock(), "owner", e.getPlayer().getUniqueId().toString());
+                StorageCacheUtils.setData(
+                        e.getBlock().getLocation(),
+                        "owner",
+                        e.getPlayer().getUniqueId().toString());
             }
         };
     }
@@ -73,7 +72,7 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
 
             @Override
             public void onBlockBreak(Block b) {
-                BlockMenu inv = BlockStorage.getInventory(b);
+                BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
 
                 if (inv != null) {
                     inv.dropItems(b.getLocation(), getOutputSlots());
@@ -89,7 +88,7 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
 
     @Override
     public int[] getOutputSlots() {
-        return new int[] { 12, 13, 14 };
+        return new int[] {12, 13, 14};
     }
 
     @Override
@@ -104,7 +103,8 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
 
     protected void constructMenu(BlockMenuPreset preset) {
         for (int slot : border) {
-            preset.addItem(slot, new CustomItemStack(Material.PURPLE_STAINED_GLASS_PANE, " "), (p, s, item, action) -> false);
+            preset.addItem(
+                    slot, new CustomItemStack(Material.PURPLE_STAINED_GLASS_PANE, " "), (p, s, item, action) -> false);
         }
     }
 
@@ -113,7 +113,7 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
         addItemHandler(new BlockTicker() {
 
             @Override
-            public void tick(Block b, SlimefunItem sf, Config data) {
+            public void tick(Block b, SlimefunItem sf, SlimefunBlockData data) {
                 ExpCollector.this.tick(b);
             }
 
@@ -126,7 +126,9 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
 
     protected void tick(Block block) {
         Location location = block.getLocation();
-        Iterator<Entity> iterator = block.getWorld().getNearbyEntities(location, 4.0, 4.0, 4.0, n -> n instanceof ExperienceOrb && n.isValid()).iterator();
+        Iterator<Entity> iterator = block.getWorld()
+                .getNearbyEntities(location, 4.0, 4.0, 4.0, n -> n instanceof ExperienceOrb && n.isValid())
+                .iterator();
         int experiencePoints = 0;
 
         while (iterator.hasNext() && experiencePoints == 0) {
@@ -155,7 +157,7 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
      */
     private void produceFlasks(@Nonnull Location location, int experiencePoints) {
         int withdrawn = 0;
-        BlockMenu menu = BlockStorage.getInventory(location);
+        BlockMenu menu = StorageCacheUtils.getMenu(location);
         for (int level = 0; level < getStoredExperience(location); level = level + 10) {
             if (menu.fits(SlimefunItems.FILLED_FLASK_OF_KNOWLEDGE, getOutputSlots())) {
                 withdrawn = withdrawn + 10;
@@ -165,17 +167,17 @@ public class ExpCollector extends SlimefunItem implements InventoryBlock, Energy
                 break;
             }
         }
-        BlockStorage.addBlockInfo(location, DATA_KEY, String.valueOf(experiencePoints - withdrawn));
+        StorageCacheUtils.setData(location, DATA_KEY, String.valueOf(experiencePoints - withdrawn));
     }
 
     private int getStoredExperience(Location location) {
-        Config cfg = BlockStorage.getLocationInfo(location);
-        String value = cfg.getString(DATA_KEY);
+        SlimefunBlockData blockData = StorageCacheUtils.getBlock(location);
+        String value = blockData.getData(DATA_KEY);
 
         if (value != null) {
             return Integer.parseInt(value);
         } else {
-            BlockStorage.addBlockInfo(location, DATA_KEY, "0");
+            blockData.setData(DATA_KEY, "0");
             return 0;
         }
     }

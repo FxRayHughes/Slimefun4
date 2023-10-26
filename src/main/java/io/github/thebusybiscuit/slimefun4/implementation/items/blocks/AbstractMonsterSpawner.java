@@ -1,12 +1,15 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.blocks;
 
+import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.block.BlockState;
@@ -16,18 +19,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
-
 /**
  * This is a parent class for the {@link BrokenSpawner} and {@link RepairedSpawner}
  * to provide some utility methods.
- * 
+ *
  * @author TheBusyBiscuit
- * 
+ *
  * @see BrokenSpawner
  * @see RepairedSpawner
  *
@@ -42,10 +39,10 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
     /**
      * This method tries to obtain an {@link EntityType} from a given {@link ItemStack}.
      * The provided {@link ItemStack} must be a {@link RepairedSpawner} item.
-     * 
+     *
      * @param item
      *            The {@link ItemStack} to extract the {@link EntityType} from
-     * 
+     *
      * @return An {@link Optional} describing the result
      */
     @Nonnull
@@ -56,8 +53,15 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
 
         // We may want to update this in the future to also make use of the BlockStateMeta
         for (String line : meta.getLore()) {
-            if (ChatColor.stripColor(line).startsWith("Type: ") && !line.contains("<Type>")) {
-                EntityType type = EntityType.valueOf(ChatColor.stripColor(line).replace("Type: ", "").replace(' ', '_').toUpperCase(Locale.ROOT));
+            String stripColor = ChatColor.stripColor(line);
+
+            if ((stripColor.startsWith("类型: ") || stripColor.startsWith("Type:"))
+                    && (!line.contains("<类型>") || line.contains("<Type>"))) {
+                EntityType type = EntityType.valueOf(ChatColor.stripColor(line)
+                        .replace("类型: ", "")
+                        .replace("Type: ", "")
+                        .replace(' ', '_')
+                        .toUpperCase(Locale.ROOT));
                 return Optional.of(type);
             }
         }
@@ -69,10 +73,10 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
      * This method returns a finished {@link ItemStack} of this {@link SlimefunItem}, modified
      * to hold and represent the given {@link EntityType}.
      * It updates the lore and {@link BlockStateMeta} to reflect the specified {@link EntityType}.
-     * 
+     *
      * @param type
      *            The {@link EntityType} to apply
-     * 
+     *
      * @return An {@link ItemStack} for this {@link SlimefunItem} holding that {@link EntityType}
      */
     @Nonnull
@@ -97,8 +101,10 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
         List<String> lore = meta.getLore();
 
         for (int i = 0; i < lore.size(); i++) {
-            if (lore.get(i).contains("<Type>")) {
-                lore.set(i, lore.get(i).replace("<Type>", ChatUtils.humanize(type.name())));
+            String currentLine = lore.get(i);
+            if (currentLine.contains("<Type>") || currentLine.contains("<类型>")) {
+                String typeName = ChatUtils.humanize(type.name());
+                lore.set(i, currentLine.replace("<Type>", typeName).replace("<类型>", typeName));
                 break;
             }
         }
@@ -108,5 +114,4 @@ public abstract class AbstractMonsterSpawner extends SlimefunItem {
 
         return item;
     }
-
 }

@@ -1,16 +1,7 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric.machines.entities;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Animals;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemHandler;
@@ -23,17 +14,23 @@ import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.SimpleBlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
-
-import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 
 public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyNetComponent {
 
-    private final int[] border = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
+    private final int[] border = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
 
     private static final int ENERGY_CONSUMPTION = 60;
 
@@ -54,7 +51,7 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
 
             @Override
             public void onBlockBreak(Block b) {
-                BlockMenu inv = BlockStorage.getInventory(b);
+                BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
 
                 if (inv != null) {
                     inv.dropItems(b.getLocation(), getInputSlots());
@@ -65,13 +62,16 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
 
     protected void constructMenu(BlockMenuPreset preset) {
         for (int i : border) {
-            preset.addItem(i, new CustomItemStack(new ItemStack(Material.CYAN_STAINED_GLASS_PANE), " "), (p, slot, item, action) -> false);
+            preset.addItem(
+                    i,
+                    new CustomItemStack(new ItemStack(Material.CYAN_STAINED_GLASS_PANE), " "),
+                    (p, slot, item, action) -> false);
         }
     }
 
     @Override
     public int[] getInputSlots() {
-        return new int[] { 10, 11, 12, 13, 14, 15, 16 };
+        return new int[] {10, 11, 12, 13, 14, 15, 16};
     }
 
     @Override
@@ -94,7 +94,7 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
         addItemHandler(new BlockTicker() {
 
             @Override
-            public void tick(Block b, SlimefunItem sf, Config data) {
+            public void tick(Block b, SlimefunItem sf, SlimefunBlockData data) {
                 AutoBreeder.this.tick(b);
             }
 
@@ -102,12 +102,11 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
             public boolean isSynchronized() {
                 return true;
             }
-
         });
     }
 
     protected void tick(Block b) {
-        BlockMenu inv = BlockStorage.getInventory(b);
+        BlockMenu inv = StorageCacheUtils.getMenu(b.getLocation());
 
         for (Entity n : b.getWorld().getNearbyEntities(b.getLocation(), 4.0, 2.0, 4.0, this::canBreed)) {
             for (int slot : getInputSlots()) {
@@ -120,7 +119,8 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
                     inv.consumeItem(slot);
 
                     ((Animals) n).setLoveModeTicks(600);
-                    n.getWorld().spawnParticle(Particle.HEART, ((LivingEntity) n).getEyeLocation(), 8, 0.2F, 0.2F, 0.2F);
+                    n.getWorld()
+                            .spawnParticle(Particle.HEART, ((LivingEntity) n).getEyeLocation(), 8, 0.2F, 0.2F, 0.2F);
                     return;
                 }
             }
@@ -134,5 +134,4 @@ public class AutoBreeder extends SlimefunItem implements InventoryBlock, EnergyN
 
         return false;
     }
-
 }

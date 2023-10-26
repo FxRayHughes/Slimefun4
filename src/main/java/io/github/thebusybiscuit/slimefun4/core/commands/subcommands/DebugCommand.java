@@ -1,13 +1,11 @@
 package io.github.thebusybiscuit.slimefun4.core.commands.subcommands;
 
-import javax.annotation.Nonnull;
-
-import org.bukkit.command.CommandSender;
-
 import io.github.thebusybiscuit.slimefun4.core.commands.SlimefunCommand;
 import io.github.thebusybiscuit.slimefun4.core.commands.SubCommand;
 import io.github.thebusybiscuit.slimefun4.core.debug.Debug;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import javax.annotation.Nonnull;
+import org.bukkit.command.CommandSender;
 
 /**
  * The debug command will allow server owners to get information for us developers.
@@ -34,9 +32,11 @@ public class DebugCommand extends SubCommand {
         }
 
         if (args.length == 1) {
-            String currentCase = Debug.getTestCase();
-            if (currentCase != null) {
-                Slimefun.getLocalization().sendMessage(sender, "commands.debug.current", true, msg -> msg.replace("%test_case%", currentCase));
+            String currentCase = String.join(", ", Debug.getTestCase());
+            if (!currentCase.isEmpty()) {
+                Slimefun.getLocalization()
+                        .sendMessage(
+                                sender, "commands.debug.current", true, msg -> msg.replace("%test_case%", currentCase));
             } else {
                 Slimefun.getLocalization().sendMessage(sender, "commands.debug.none-running", true);
             }
@@ -45,12 +45,16 @@ public class DebugCommand extends SubCommand {
 
         String test = args[1];
 
-        if (test.equalsIgnoreCase("disable") || test.equalsIgnoreCase("off")) {
-            Debug.setTestCase(null);
-            Slimefun.getLocalization().sendMessage(sender, "commands.debug.disabled");
-        } else {
-            Debug.setTestCase(test);
-            Slimefun.getLocalization().sendMessage(sender, "commands.debug.running", msg -> msg.replace("%test%", test));
+        switch (test.toLowerCase()) {
+            case "disable", "off" -> {
+                Debug.disableTestCase();
+                Slimefun.getLocalization().sendMessage(sender, "commands.debug.disabled");
+            }
+            default -> {
+                Debug.addTestCase(test);
+                Slimefun.getLocalization()
+                        .sendMessage(sender, "commands.debug.running", msg -> msg.replace("%test%", test));
+            }
         }
     }
 }

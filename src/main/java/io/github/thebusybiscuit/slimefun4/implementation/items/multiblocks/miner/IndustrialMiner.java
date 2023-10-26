@@ -1,15 +1,24 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks.miner;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.common.ChatColors;
+import io.github.bakedlibs.dough.items.CustomItemStack;
+import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
+import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
+import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
+import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,31 +30,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import io.github.bakedlibs.dough.common.ChatColors;
-import io.github.bakedlibs.dough.items.CustomItemStack;
-import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
-import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
-import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
-
 /**
  * The {@link IndustrialMiner} is a {@link MultiBlockMachine} that can mine any
  * ores it finds in a given range underneath where it was placed.
- * 
+ *
  * <i>And for those of you who are wondering... yes this is the replacement for the
  * long-time deprecated Digital Miner.</i>
- * 
+ *
  * @author TheBusyBiscuit
- * 
  * @see AdvancedIndustrialMiner
  * @see MiningTask
- *
  */
 public class IndustrialMiner extends MultiBlockMachine {
 
@@ -59,13 +53,24 @@ public class IndustrialMiner extends MultiBlockMachine {
     private final int range;
 
     @ParametersAreNonnullByDefault
-    public IndustrialMiner(ItemGroup itemGroup, SlimefunItemStack item, Material baseMaterial, boolean silkTouch, int range) {
+    public IndustrialMiner(
+            ItemGroup itemGroup, SlimefunItemStack item, Material baseMaterial, boolean silkTouch, int range) {
         // @formatter:off
-        super(itemGroup, item, new ItemStack[] {
-            null, null, null,
-            new CustomItemStack(Material.PISTON, "Piston (facing up)"), new ItemStack(Material.CHEST), new CustomItemStack(Material.PISTON, "Piston (facing up)"),
-            new ItemStack(baseMaterial), new ItemStack(Material.BLAST_FURNACE), new ItemStack(baseMaterial)
-        }, BlockFace.UP);
+        super(
+                itemGroup,
+                item,
+                new ItemStack[] {
+                    null,
+                    null,
+                    null,
+                    new CustomItemStack(Material.PISTON, "活塞 (朝上)"),
+                    new ItemStack(Material.CHEST),
+                    new CustomItemStack(Material.PISTON, "活塞 (朝上)"),
+                    new ItemStack(baseMaterial),
+                    new ItemStack(Material.BLAST_FURNACE),
+                    new ItemStack(baseMaterial)
+                },
+                BlockFace.UP);
         // @formatter:on
 
         this.oreDictionary = OreDictionary.forVersion(Slimefun.getMinecraftVersion());
@@ -80,7 +85,7 @@ public class IndustrialMiner extends MultiBlockMachine {
     /**
      * This returns whether this {@link IndustrialMiner} will output ores as they are.
      * Similar to the Silk Touch {@link Enchantment}.
-     * 
+     *
      * @return Whether to treat ores with Silk Touch
      */
     public boolean hasSilkTouch() {
@@ -91,10 +96,10 @@ public class IndustrialMiner extends MultiBlockMachine {
      * This method returns the range of the {@link IndustrialMiner}.
      * The total area will be determined by the range multiplied by 2 plus the actual center
      * of the machine.
-     * 
+     *
      * So a range of 3 will make the {@link IndustrialMiner} affect an area of 7x7 blocks.
      * 3 on all axis, plus the center of the machine itself.
-     * 
+     *
      * @return The range of this {@link IndustrialMiner}
      */
     public int getRange() {
@@ -122,10 +127,10 @@ public class IndustrialMiner extends MultiBlockMachine {
 
     /**
      * This method returns the outcome that mining certain ores yields.
-     * 
+     *
      * @param material
      *            The {@link Material} of the ore that was mined
-     * 
+     *
      * @return The outcome when mining this ore
      */
     public @Nonnull ItemStack getOutcome(@Nonnull Material material) {
@@ -139,14 +144,14 @@ public class IndustrialMiner extends MultiBlockMachine {
 
     /**
      * This registers a new fuel type for this {@link IndustrialMiner}.
-     * 
+     *
      * @param ores
      *            The amount of ores this allows you to mine
      * @param item
      *            The item that shall be consumed
      */
     public void addFuelType(int ores, @Nonnull ItemStack item) {
-        Validate.isTrue(ores > 1 && ores % 2 == 0, "The amount of ores must be at least 2 and a multiple of 2.");
+        Validate.isTrue(ores > 1 && ores % 2 == 0, "矿石的数量必须 >= 2 且为 2 的倍数.");
         Validate.notNull(item, "The fuel item cannot be null");
 
         fuelTypes.add(new MachineFuel(ores / 2, item));
@@ -165,7 +170,7 @@ public class IndustrialMiner extends MultiBlockMachine {
             ItemStack item = fuel.getInput().clone();
             ItemMeta im = item.getItemMeta();
             List<String> lore = new ArrayList<>();
-            lore.add(ChatColors.color("&8\u21E8 &7Lasts for max. " + fuel.getTicks() + " Ores"));
+            lore.add(ChatColors.color("&8\u21E8 &7剩余最多 " + fuel.getTicks() + " 个矿石"));
             im.setLore(lore);
             item.setItemMeta(im);
             list.add(item);
@@ -196,9 +201,9 @@ public class IndustrialMiner extends MultiBlockMachine {
         Block northern = chest.getRelative(BlockFace.NORTH);
 
         if (northern.getType() == Material.PISTON) {
-            return new Block[] { northern, chest.getRelative(BlockFace.SOUTH) };
+            return new Block[] {northern, chest.getRelative(BlockFace.SOUTH)};
         } else {
-            return new Block[] { chest.getRelative(BlockFace.WEST), chest.getRelative(BlockFace.EAST) };
+            return new Block[] {chest.getRelative(BlockFace.WEST), chest.getRelative(BlockFace.EAST)};
         }
     }
 
@@ -207,7 +212,7 @@ public class IndustrialMiner extends MultiBlockMachine {
      *
      * @param block
      *            The {@link Block} to check
-     * 
+     *
      * @return Whether this {@link IndustrialMiner} is capable of mining this {@link Block}
      */
     public boolean canMine(@Nonnull Block block) {
@@ -215,12 +220,11 @@ public class IndustrialMiner extends MultiBlockMachine {
         Material type = block.getType();
 
         if (type == Material.ANCIENT_DEBRIS) {
-            return canMineAncientDebris.getValue() && !BlockStorage.hasBlockInfo(block);
+            return canMineAncientDebris.getValue() && !StorageCacheUtils.hasBlock(block.getLocation());
         } else if (version.isAtLeast(MinecraftVersion.MINECRAFT_1_17) && SlimefunTag.DEEPSLATE_ORES.isTagged(type)) {
-            return canMineDeepslateOres.getValue() && !BlockStorage.hasBlockInfo(block);
+            return canMineDeepslateOres.getValue() && !StorageCacheUtils.hasBlock(block.getLocation());
         } else {
-            return SlimefunTag.INDUSTRIAL_MINER_ORES.isTagged(type) && !BlockStorage.hasBlockInfo(block);
+            return SlimefunTag.INDUSTRIAL_MINER_ORES.isTagged(type) && !StorageCacheUtils.hasBlock(block.getLocation());
         }
     }
-
 }

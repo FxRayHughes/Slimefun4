@@ -2,9 +2,7 @@ package io.github.thebusybiscuit.slimefun4.utils.itemstack;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.annotation.Nonnull;
-
 import org.apache.commons.lang.Validate;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -14,11 +12,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 /**
  * This {@link ItemStack}, which is <b>not intended for actual usage</b>, caches its {@link ItemMeta}.
  * This significantly speeds up any {@link ItemStack} comparisons a lot.
- * 
+ *
  * You cannot invoke {@link #equals(Object)}, {@link #hashCode()} or any of its setter on an
  * {@link ItemStackWrapper}.<br>
  * Please be very careful when using this.
- * 
+ *
  * @author TheBusyBiscuit
  * @author md5sha256
  *
@@ -58,7 +56,9 @@ public final class ItemStackWrapper extends ItemStack {
          * This will significantly speed up any loop comparisons if used correctly.
          */
         if (meta == null) {
-            throw new UnsupportedOperationException("This ItemStack has no ItemMeta! Make sure to check ItemStack#hasItemMeta() before accessing this method!");
+            throw new UnsupportedOperationException(
+                    "This ItemStack has no ItemMeta! Make sure to check ItemStack#hasItemMeta() before"
+                            + " accessing this method!");
         } else {
             return meta;
         }
@@ -141,10 +141,10 @@ public final class ItemStackWrapper extends ItemStack {
 
     /**
      * This creates an {@link ItemStackWrapper} array from a given {@link ItemStack} array.
-     * 
+     *
      * @param items
      *            The array of {@link ItemStack ItemStacks} to transform
-     * 
+     *
      * @return An {@link ItemStackWrapper} array
      */
     public static @Nonnull ItemStackWrapper[] wrapArray(@Nonnull ItemStack[] items) {
@@ -163,10 +163,10 @@ public final class ItemStackWrapper extends ItemStack {
 
     /**
      * This creates an {@link ItemStackWrapper} {@link List} from a given {@link ItemStack} {@link List} *
-     * 
+     *
      * @param items
      *            The {@link List} of {@link ItemStack ItemStacks} to transform
-     * 
+     *
      * @return An {@link ItemStackWrapper} array
      */
     public static @Nonnull List<ItemStackWrapper> wrapList(@Nonnull List<ItemStack> items) {
@@ -183,5 +183,4 @@ public final class ItemStackWrapper extends ItemStack {
 
         return list;
     }
-
 }

@@ -1,12 +1,10 @@
 /bin/
-/target/
 /plugins/
 /sonar/
 /.settings/
+/target/
 /.idea/
 /.vscode/
-
-dependency-reduced-pom.xml
 
 .classpath
 .factorypath
@@ -14,3 +12,9 @@ dependency-reduced-pom.xml
 *.iml
 *.bak
 .DS_Store
+
+dependency-reduced-pom.xml
+/src/test/implementation/items/autocrafters/TestAutoCrafter.java
+/.git-versioned-pom.xml
+
+*.db

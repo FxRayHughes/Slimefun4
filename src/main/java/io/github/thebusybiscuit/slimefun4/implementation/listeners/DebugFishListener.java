@@ -1,12 +1,24 @@
 package io.github.thebusybiscuit.slimefun4.implementation.listeners;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.callback.IAsyncReadCallback;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
+import io.github.bakedlibs.dough.common.ChatColors;
+import io.github.bakedlibs.dough.skins.PlayerHead;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
+import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetProvider;
+import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
+import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
+import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Level;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -20,24 +32,10 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
-import io.github.bakedlibs.dough.common.ChatColors;
-import io.github.bakedlibs.dough.skins.PlayerHead;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
-import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetProvider;
-import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
-import io.github.thebusybiscuit.slimefun4.utils.HeadTexture;
-import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
-import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
-
 /**
  * This {@link Listener} is responsible for handling our debugging tool, the debug fish.
  * This is where the functionality of this item is implemented.
- * 
+ *
  * @author TheBusyBiscuit
  *
  */
@@ -79,8 +77,10 @@ public class DebugFishListener implements Listener {
     @ParametersAreNonnullByDefault
     private void onLeftClick(Player p, Block b, PlayerInteractEvent e) {
         if (p.isSneaking()) {
-            if (BlockStorage.hasBlockInfo(b)) {
-                BlockStorage.clearBlockInfo(b);
+            var controller = Slimefun.getDatabaseManager().getBlockDataController();
+            var loc = b.getLocation();
+            if (controller.getBlockDataFromCache(loc) != null) {
+                controller.removeBlock(loc);
             }
         } else {
             e.setCancelled(false);
@@ -91,16 +91,37 @@ public class DebugFishListener implements Listener {
     private void onRightClick(Player p, Block b, BlockFace face) {
         if (p.isSneaking()) {
             // Fixes #2655 - Delaying the placement to prevent a new event from being fired
-            Slimefun.runSync(() -> {
-                Block block = b.getRelative(face);
-                block.setType(Material.PLAYER_HEAD);
+            Slimefun.runSync(
+                    () -> {
+                        Block block = b.getRelative(face);
+                        block.setType(Material.PLAYER_HEAD);
 
-                PlayerHead.setSkin(block, HeadTexture.MISSING_TEXTURE.getAsSkin(), true);
-                SoundEffect.DEBUG_FISH_CLICK_SOUND.playFor(p);
-            }, 2L);
-        } else if (BlockStorage.hasBlockInfo(b)) {
+                        PlayerHead.setSkin(block, HeadTexture.MISSING_TEXTURE.getAsSkin(), true);
+                        SoundEffect.DEBUG_FISH_CLICK_SOUND.playFor(p);
+                    },
+                    2L);
+            return;
+        }
+
+        var controller = Slimefun.getDatabaseManager().getBlockDataController();
+        var blockData = controller.getBlockDataFromCache(b.getLocation());
+        if (blockData != null) {
             try {
-                sendInfo(p, b);
+                if (blockData.isDataLoaded()) {
+                    sendInfo(p, b);
+                } else {
+                    controller.loadBlockDataAsync(blockData, new IAsyncReadCallback<>() {
+                        @Override
+                        public boolean runOnMainThread() {
+                            return true;
+                        }
+
+                        @Override
+                        public void onResult(SlimefunBlockData result) {
+                            sendInfo(p, b);
+                        }
+                    });
+                }
             } catch (Exception x) {
                 Slimefun.logger().log(Level.SEVERE, "An Exception occurred while using a Debug-Fish", x);
             }
@@ -116,7 +137,8 @@ public class DebugFishListener implements Listener {
 
             if (!tags.isEmpty()) {
                 p.sendMessage(" ");
-                p.sendMessage(ChatColors.color("&dSlimefun tags for: &e") + b.getType().name());
+                p.sendMessage(ChatColors.color("&dSlimefun tags for: &e")
+                        + b.getType().name());
 
                 for (SlimefunTag tag : tags) {
                     p.sendMessage(ChatColors.color("&d* &e") + tag.name());
@@ -129,10 +151,12 @@ public class DebugFishListener implements Listener {
 
     @ParametersAreNonnullByDefault
     private void sendInfo(Player p, Block b) {
-        SlimefunItem item = BlockStorage.check(b);
+        var blockData = StorageCacheUtils.getBlock(b.getLocation());
+        SlimefunItem item = SlimefunItem.getById(blockData.getSfId());
 
         p.sendMessage(" ");
-        p.sendMessage(ChatColors.color("&d" + b.getType() + " &e@ X: " + b.getX() + " Y: " + b.getY() + " Z: " + b.getZ()));
+        p.sendMessage(
+                ChatColors.color("&d" + b.getType() + " &e@ X: " + b.getX() + " Y: " + b.getY() + " Z: " + b.getZ()));
         p.sendMessage(ChatColors.color("&dId: " + "&e" + item.getId()));
         p.sendMessage(ChatColors.color("&dPlugin: " + "&e" + item.getAddon().getName()));
 
@@ -141,31 +165,47 @@ public class DebugFishListener implements Listener {
 
             // Check if the skull is a wall skull, and if so use Directional instead of Rotatable.
             if (b.getType() == Material.PLAYER_WALL_HEAD) {
-                p.sendMessage(ChatColors.color("  &dFacing: &e" + ((Directional) b.getBlockData()).getFacing().toString()));
+                p.sendMessage(ChatColors.color("  &dFacing: &e"
+                        + ((Directional) b.getBlockData()).getFacing().toString()));
             } else {
-                p.sendMessage(ChatColors.color("  &dRotation: &e" + ((Rotatable) b.getBlockData()).getRotation().toString()));
+                p.sendMessage(ChatColors.color("  &dRotation: &e"
+                        + ((Rotatable) b.getBlockData()).getRotation().toString()));
             }
         }
 
-        if (BlockStorage.getStorage(b.getWorld()).hasInventory(b.getLocation())) {
+        if (blockData.getBlockMenu() != null) {
             p.sendMessage(ChatColors.color("&dInventory: " + greenCheckmark));
         } else {
             p.sendMessage(ChatColors.color("&dInventory: " + redCross));
         }
 
         if (item.isTicking()) {
-            p.sendMessage(ChatColors.color("&dTicking: " + greenCheckmark));
-            p.sendMessage(ChatColors.color("  &dAsync: &e" + (item.getBlockTicker().isSynchronized() ? redCross : greenCheckmark)));
+            p.sendMessage(ChatColors.color("&dTicker: " + greenCheckmark));
+            p.sendMessage(ChatColors.color(
+                    "  &dAsync: &e" + (item.getBlockTicker().isSynchronized() ? redCross : greenCheckmark)));
         } else if (item instanceof EnergyNetProvider) {
-            p.sendMessage(ChatColors.color("&dTicking: &3Indirect (Generator)"));
+            p.sendMessage(ChatColors.color("&dTicker: &3Indirect (Generator)"));
+        } else {
+            p.sendMessage(ChatColors.color("&dTicker: " + redCross));
+        }
+
+        var ticker = Slimefun.getTickerTask().getLocations(b.getChunk()).stream()
+                .filter(l -> l.equals(b.getLocation()))
+                .findFirst();
+
+        if (ticker.isPresent()) {
+            p.sendMessage(ChatColors.color("&dTicking: " + greenCheckmark));
         } else {
             p.sendMessage(ChatColors.color("&dTicking: " + redCross));
         }
 
         if (Slimefun.getProfiler().hasTimings(b)) {
-            p.sendMessage(ChatColors.color("  &dTimings: &e" + Slimefun.getProfiler().getTime(b)));
-            p.sendMessage(ChatColors.color("  &dTotal Timings: &e" + Slimefun.getProfiler().getTime(item)));
-            p.sendMessage(ChatColors.color("  &dChunk Timings: &e" + Slimefun.getProfiler().getTime(b.getChunk())));
+            p.sendMessage(
+                    ChatColors.color("  &dTimings: &e" + Slimefun.getProfiler().getTime(b)));
+            p.sendMessage(ChatColors.color(
+                    "  &dTotal Timings: &e" + Slimefun.getProfiler().getTime(item)));
+            p.sendMessage(ChatColors.color(
+                    "  &dChunk Timings: &e" + Slimefun.getProfiler().getTime(b.getChunk())));
         }
 
         if (item instanceof EnergyNetComponent component) {
@@ -174,13 +214,14 @@ public class DebugFishListener implements Listener {
 
             if (component.isChargeable()) {
                 p.sendMessage(ChatColors.color("  &dChargeable: " + greenCheckmark));
-                p.sendMessage(ChatColors.color("  &dEnergy: &e" + component.getCharge(b.getLocation()) + " / " + component.getCapacity()));
+                p.sendMessage(ChatColors.color(
+                        "  &dEnergy: &e" + component.getCharge(b.getLocation()) + " / " + component.getCapacity()));
             } else {
                 p.sendMessage(ChatColors.color("&dChargeable: " + redCross));
             }
         }
 
-        p.sendMessage(ChatColors.color("&6" + BlockStorage.getBlockInfoAsJson(b)));
+        blockData.getAllData().forEach((k, v) -> p.sendMessage(ChatColors.color("&6" + k + ": " + v)));
         p.sendMessage(" ");
     }
 }

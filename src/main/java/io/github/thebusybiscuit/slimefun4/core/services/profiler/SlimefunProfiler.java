@@ -1,5 +1,10 @@
 package io.github.thebusybiscuit.slimefun4.core.services.profiler;
 
+import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.tasks.TickerTask;
+import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -12,9 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
-
 import javax.annotation.Nonnull;
-
 import org.apache.commons.lang.Validate;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -22,21 +25,15 @@ import org.bukkit.Server;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitScheduler;
 
-import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.tasks.TickerTask;
-import io.github.thebusybiscuit.slimefun4.utils.NumberUtils;
-
 /**
  * The {@link SlimefunProfiler} works closely to the {@link TickerTask} and is
  * responsible for monitoring that task.
  * It collects timings data for any ticked {@link Block} and the corresponding {@link SlimefunItem}.
  * This allows developers to identify laggy {@link SlimefunItem SlimefunItems} or {@link SlimefunAddon SlimefunAddons}.
  * But it also enables Server Admins to locate lag-inducing areas on the {@link Server}.
- * 
+ *
  * @author TheBusyBiscuit
- * 
+ *
  * @see TickerTask
  *
  */
@@ -60,7 +57,8 @@ public class SlimefunProfiler {
      * this data in split seconds.
      * So we cannot simply wait until the next server tick for this.
      */
-    private final ExecutorService executor = Executors.newFixedThreadPool(threadFactory.getThreadCount(), threadFactory);
+    private final ExecutorService executor =
+            Executors.newFixedThreadPool(threadFactory.getThreadCount(), threadFactory);
 
     /**
      * All possible values of {@link PerformanceRating}.
@@ -108,7 +106,7 @@ public class SlimefunProfiler {
 
     /**
      * This method starts a new profiler entry.
-     * 
+     *
      * @return A timestamp, best fed back into {@link #closeEntry(Location, SlimefunItem, long)}
      */
     public long newEntry() {
@@ -124,9 +122,9 @@ public class SlimefunProfiler {
      * This method schedules a given amount of entries for the future.
      * Be careful to {@link #closeEntry(Location, SlimefunItem, long)} all of them again!
      * No {@link PerformanceSummary} will be sent until all entries were closed.
-     * 
+     *
      * If the specified amount is negative, scheduled entries will be removed
-     * 
+     *
      * @param amount
      *            The amount of entries that should be scheduled. Can be negative
      */
@@ -139,7 +137,7 @@ public class SlimefunProfiler {
     /**
      * This method closes a previously started entry.
      * Make sure to call {@link #newEntry()} to get the timestamp in advance.
-     * 
+     *
      * @param l
      *            The {@link Location} of our {@link Block}
      * @param item
@@ -203,7 +201,10 @@ public class SlimefunProfiler {
                     Iterator<PerformanceInspector> iterator = requests.iterator();
 
                     while (iterator.hasNext()) {
-                        iterator.next().sendMessage("Your timings report has timed out, we were still waiting for " + queued.get() + " samples to be collected :/");
+                        iterator.next()
+                                .sendMessage("Your timings report has timed out, we were still waiting for "
+                                        + queued.get()
+                                        + " samples to be collected :/");
                         iterator.remove();
                     }
 
@@ -243,7 +244,7 @@ public class SlimefunProfiler {
     /**
      * This method requests a summary for the given {@link PerformanceInspector}.
      * The summary will be sent upon the next available moment in time.
-     * 
+     *
      * @param inspector
      *            The {@link PerformanceInspector} who shall receive this summary.
      */
@@ -343,7 +344,7 @@ public class SlimefunProfiler {
 
     /**
      * This method returns the current {@link PerformanceRating}.
-     * 
+     *
      * @return The current performance grade
      */
     @Nonnull
@@ -371,10 +372,10 @@ public class SlimefunProfiler {
     /**
      * This method checks whether the {@link SlimefunProfiler} has collected timings on
      * the given {@link Block}
-     * 
+     *
      * @param b
      *            The {@link Block}
-     * 
+     *
      * @return Whether timings of this {@link Block} have been collected
      */
     public boolean hasTimings(@Nonnull Block b) {
@@ -393,7 +394,8 @@ public class SlimefunProfiler {
     public String getTime(@Nonnull Chunk chunk) {
         Validate.notNull(chunk, "Cannot get timings for a null Chunk");
 
-        long time = getByChunk().getOrDefault(chunk.getWorld().getName() + " (" + chunk.getX() + ',' + chunk.getZ() + ')', 0L);
+        long time = getByChunk()
+                .getOrDefault(chunk.getWorld().getName() + " (" + chunk.getX() + ',' + chunk.getZ() + ')', 0L);
         return NumberUtils.getAsMillis(time);
     }
 

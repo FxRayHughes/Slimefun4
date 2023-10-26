@@ -1,18 +1,14 @@
 package io.github.thebusybiscuit.slimefun4.core.services;
 
-import java.io.File;
-import java.util.logging.Level;
-
-import javax.annotation.Nonnull;
-
-import org.bukkit.plugin.Plugin;
-
 import io.github.bakedlibs.dough.config.Config;
-import io.github.bakedlibs.dough.updater.GitHubBuildsUpdater;
 import io.github.bakedlibs.dough.updater.PluginUpdater;
 import io.github.bakedlibs.dough.versions.PrefixedVersion;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunBranch;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import java.io.File;
+import java.util.logging.Level;
+import javax.annotation.Nonnull;
+import org.bukkit.plugin.Plugin;
 
 /**
  * This Class represents our {@link PluginUpdater} Service.
@@ -53,34 +49,10 @@ public class UpdaterService {
      */
     public UpdaterService(@Nonnull Slimefun plugin, @Nonnull String version, @Nonnull File file) {
         this.plugin = plugin;
-        GitHubBuildsUpdater autoUpdater = null;
 
-        if (version.contains("UNOFFICIAL")) {
-            // This Server is using a modified build that is not a public release.
-            branch = SlimefunBranch.UNOFFICIAL;
-        } else if (version.startsWith("DEV - ")) {
-            // If we are using a development build, we want to switch to our custom
-            try {
-                autoUpdater = new GitHubBuildsUpdater(plugin, file, "TheBusyBiscuit/Slimefun4/master");
-            } catch (Exception x) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to create AutoUpdater", x);
-            }
+        branch = SlimefunBranch.UNOFFICIAL;
 
-            branch = SlimefunBranch.DEVELOPMENT;
-        } else if (version.startsWith("RC - ")) {
-            // If we are using a "stable" build, we want to switch to our custom
-            try {
-                autoUpdater = new GitHubBuildsUpdater(plugin, file, "TheBusyBiscuit/Slimefun4/stable", "RC - ");
-            } catch (Exception x) {
-                plugin.getLogger().log(Level.SEVERE, "Failed to create AutoUpdater", x);
-            }
-
-            branch = SlimefunBranch.STABLE;
-        } else {
-            branch = SlimefunBranch.UNKNOWN;
-        }
-
-        this.updater = autoUpdater;
+        this.updater = null;
     }
 
     /**
@@ -114,17 +86,7 @@ public class UpdaterService {
      * This will start the {@link UpdaterService} and check for updates.
      * If it can find an update it will automatically be installed.
      */
-    public void start() {
-        if (updater != null) {
-            updater.start();
-        } else {
-            printBorder();
-            plugin.getLogger().log(Level.WARNING, "It looks like you are using an unofficially modified build of Slimefun!");
-            plugin.getLogger().log(Level.WARNING, "Auto-Updates have been disabled, this build is not considered safe.");
-            plugin.getLogger().log(Level.WARNING, "Do not report bugs encountered in this Version of Slimefun to any official sources.");
-            printBorder();
-        }
-    }
+    public void start() {}
 
     /**
      * This returns whether the {@link PluginUpdater} is enabled or not.
@@ -140,21 +102,9 @@ public class UpdaterService {
     /**
      * This method is called when the {@link UpdaterService} was disabled.
      */
-    public void disable() {
-        printBorder();
-        plugin.getLogger().log(Level.WARNING, "It looks like you have disabled auto-updates for Slimefun!");
-        plugin.getLogger().log(Level.WARNING, "Auto-Updates keep your server safe, performant and bug-free.");
-        plugin.getLogger().log(Level.WARNING, "We respect your decision.");
-
-        if (branch != SlimefunBranch.STABLE) {
-            plugin.getLogger().log(Level.WARNING, "If you are just scared of Slimefun breaking, then please consider using a \"stable\" build instead of disabling auto-updates.");
-        }
-
-        printBorder();
-    }
+    public void disable() {}
 
     private void printBorder() {
         plugin.getLogger().log(Level.WARNING, "#######################################################");
     }
-
 }

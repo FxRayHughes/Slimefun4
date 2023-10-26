@@ -1,16 +1,15 @@
 package me.mrCookieSlime.Slimefun.api.inventory;
 
+import io.github.bakedlibs.dough.config.Config;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.logging.Level;
-
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-
-import io.github.bakedlibs.dough.config.Config;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 
 // This class will be deprecated, relocated and rewritten in a future version.
 public class BlockMenu extends DirtyChestMenu {
@@ -29,6 +28,7 @@ public class BlockMenu extends DirtyChestMenu {
         this.getContents();
     }
 
+    @Deprecated
     public BlockMenu(BlockMenuPreset preset, Location l, Config cfg) {
         super(preset);
         this.location = l;
@@ -41,11 +41,35 @@ public class BlockMenu extends DirtyChestMenu {
 
         preset.clone(this);
 
-        if (preset.getSize() > -1 && !preset.getPresetSlots().contains(preset.getSize() - 1) && cfg.contains(String.valueOf(preset.getSize() - 1))) {
+        if (preset.getSize() > -1
+                && !preset.getPresetSlots().contains(preset.getSize() - 1)
+                && cfg.contains(String.valueOf(preset.getSize() - 1))) {
             addItem(preset.getSize() - 1, cfg.getItem(String.valueOf(preset.getSize() - 1)));
         }
 
         this.getContents();
+    }
+
+    public BlockMenu(BlockMenuPreset preset, Location l, ItemStack[] contents) {
+        super(preset);
+        this.location = l;
+
+        for (int i = 0; i < contents.length; i++) {
+            var item = contents[i];
+            if (item == null) {
+                continue;
+            }
+            addItem(i, item);
+        }
+
+        preset.clone(this);
+        this.getContents();
+    }
+
+    public BlockMenu(BlockMenuPreset preset, Location l, Inventory inv) {
+        super(preset);
+        this.location = l;
+        this.inventory = inv;
     }
 
     public void save(Location l) {
@@ -69,13 +93,6 @@ public class BlockMenu extends DirtyChestMenu {
         changes = 0;
     }
 
-    public void move(Location l) {
-        this.delete(this.location);
-        this.location = l;
-        this.preset.newInstance(this, l);
-        this.save(l);
-    }
-
     /**
      * Reload this {@link BlockMenu} based on its {@link BlockMenuPreset}.
      */
@@ -94,7 +111,7 @@ public class BlockMenu extends DirtyChestMenu {
     /**
      * This method drops the contents of this {@link BlockMenu} on the ground at the given
      * {@link Location}.
-     * 
+     *
      * @param l
      *            Where to drop these items
      * @param slots

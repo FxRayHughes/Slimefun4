@@ -1,15 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.tools;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemSpawnReason;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -22,16 +13,22 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.BrokenSpaw
 import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.RepairedSpawner;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.papermc.lib.PaperLib;
-
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * The {@link PickaxeOfContainment} is a Pickaxe that allows you to break Spawners.
  * Upon breaking a Spawner, a {@link BrokenSpawner} will be dropped.
  * But it also allows you to break a {@link RepairedSpawner}.
- * 
+ *
  * @author TheBusyBiscuit
- * 
+ *
  * @see BrokenSpawner
  * @see RepairedSpawner
  *
@@ -39,7 +36,8 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
 
     @ParametersAreNonnullByDefault
-    public PickaxeOfContainment(ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
+    public PickaxeOfContainment(
+            ItemGroup itemGroup, SlimefunItemStack item, RecipeType recipeType, ItemStack[] recipe) {
         super(itemGroup, item, recipeType, recipe);
     }
 
@@ -62,10 +60,10 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
         AbstractMonsterSpawner spawner;
 
         /*
-          If the spawner's BlockStorage has BlockInfo, then it's not a vanilla spawner
-          and should not give a broken spawner but a repaired one instead.
-         */
-        if (BlockStorage.hasBlockInfo(b)) {
+        If the spawner's BlockStorage has BlockInfo, then it's not a vanilla spawner
+        and should not give a broken spawner but a repaired one instead.
+        */
+        if (StorageCacheUtils.hasBlock(b.getLocation())) {
             spawner = (AbstractMonsterSpawner) SlimefunItems.REPAIRED_SPAWNER.getItem();
         } else {
             spawner = (AbstractMonsterSpawner) SlimefunItems.BROKEN_SPAWNER.getItem();
@@ -80,5 +78,4 @@ public class PickaxeOfContainment extends SimpleSlimefunItem<ToolUseHandler> {
 
         return new ItemStack(Material.SPAWNER);
     }
-
 }

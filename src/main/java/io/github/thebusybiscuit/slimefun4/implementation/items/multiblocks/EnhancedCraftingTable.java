@@ -1,19 +1,5 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
-import java.util.List;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Dispenser;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-
-import io.github.thebusybiscuit.slimefun4.core.services.sounds.SoundEffect;
 import io.github.bakedlibs.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -24,12 +10,36 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.SlimefunBackpack;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.papermc.lib.PaperLib;
+import java.util.List;
+import javax.annotation.ParametersAreNonnullByDefault;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Dispenser;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 public class EnhancedCraftingTable extends AbstractCraftingTable {
 
     @ParametersAreNonnullByDefault
     public EnhancedCraftingTable(ItemGroup itemGroup, SlimefunItemStack item) {
-        super(itemGroup, item, new ItemStack[] { null, null, null, null, new ItemStack(Material.CRAFTING_TABLE), null, null, new ItemStack(Material.DISPENSER), null }, BlockFace.SELF);
+        super(
+                itemGroup,
+                item,
+                new ItemStack[] {
+                    null,
+                    null,
+                    null,
+                    null,
+                    new ItemStack(Material.CRAFTING_TABLE),
+                    null,
+                    null,
+                    new ItemStack(Material.DISPENSER),
+                    null
+                },
+                BlockFace.SELF);
     }
 
     @Override
@@ -43,7 +53,8 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
 
             for (ItemStack[] input : inputs) {
                 if (isCraftable(inv, input)) {
-                    ItemStack output = RecipeType.getRecipeOutputList(this, input).clone();
+                    ItemStack output =
+                            RecipeType.getRecipeOutputList(this, input).clone();
 
                     if (SlimefunUtils.canPlayerUseItem(p, output, true)) {
                         craft(inv, possibleDispenser, p, b, output);
@@ -68,8 +79,12 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
         if (outputInv != null) {
             SlimefunItem sfItem = SlimefunItem.getByItem(output);
 
+            var waitCallback = false;
             if (sfItem instanceof SlimefunBackpack backpack) {
-                upgradeBackpack(p, inv, backpack, output);
+                waitCallback = upgradeBackpack(p, inv, backpack, output, () -> {
+                    SoundEffect.ENHANCED_CRAFTING_TABLE_CRAFT_SOUND.playAt(b);
+                    outputInv.addItem(output);
+                });
             }
 
             for (int j = 0; j < 9; j++) {
@@ -80,9 +95,10 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
                 }
             }
 
-            SoundEffect.ENHANCED_CRAFTING_TABLE_CRAFT_SOUND.playAt(b);
-            outputInv.addItem(output);
-
+            if (!waitCallback) {
+                SoundEffect.ENHANCED_CRAFTING_TABLE_CRAFT_SOUND.playAt(b);
+                outputInv.addItem(output);
+            }
         } else {
             Slimefun.getLocalization().sendMessage(p, "machines.full-inventory", true);
         }
@@ -90,9 +106,9 @@ public class EnhancedCraftingTable extends AbstractCraftingTable {
 
     private boolean isCraftable(Inventory inv, ItemStack[] recipe) {
         for (int j = 0; j < inv.getContents().length; j++) {
-            if (!SlimefunUtils.isItemSimilar(inv.getContents()[j], recipe[j], true, true, false)) {
+            if (!SlimefunUtils.isItemSimilar(inv.getContents()[j], recipe[j], true, true, false, false)) {
                 if (SlimefunItem.getByItem(recipe[j]) instanceof SlimefunBackpack) {
-                    if (!SlimefunUtils.isItemSimilar(inv.getContents()[j], recipe[j], false, true, false)) {
+                    if (!SlimefunUtils.isItemSimilar(inv.getContents()[j], recipe[j], false, true, false, false)) {
                         return false;
                     }
                 } else {

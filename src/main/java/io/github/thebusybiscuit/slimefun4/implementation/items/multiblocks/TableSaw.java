@@ -1,13 +1,19 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.multiblocks;
 
+import io.github.bakedlibs.dough.items.ItemUtils;
+import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
+import io.github.thebusybiscuit.slimefun4.api.items.ItemSetting;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
+import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
+import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
+import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -18,23 +24,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import io.github.bakedlibs.dough.items.ItemUtils;
-import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
-import io.github.thebusybiscuit.slimefun4.core.multiblocks.MultiBlockMachine;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.implementation.items.blocks.OutputChest;
-
 /**
  * The {@link TableSaw} is an implementation of a {@link MultiBlockMachine} that allows
  * you to turn Logs into Wooden Planks.
- * 
+ *
  * It also replaced the old "Saw Mill" from earlier versions.
- * 
+ *
  * @author dniym
  * @author svr333
  * @author TheBusyBiscuit
- * 
+ *
  * @see MultiBlockMachine
  *
  */
@@ -42,14 +41,26 @@ public class TableSaw extends MultiBlockMachine {
 
     private final List<ItemStack> displayedRecipes = new ArrayList<>();
 
+    private final ItemSetting<Boolean> canUseSlimefunItems = new ItemSetting<>(this, "can-use-slimefun-items", true);
+
     @ParametersAreNonnullByDefault
     public TableSaw(ItemGroup group, SlimefunItemStack item) {
         // @formatter:off
-        super(group, item, new ItemStack[] {
-            null, null, null,
-            new ItemStack(Material.SMOOTH_STONE_SLAB), new ItemStack(Material.STONECUTTER), new ItemStack(Material.SMOOTH_STONE_SLAB),
-            null, new ItemStack(Material.IRON_BLOCK), null
-        }, BlockFace.SELF);
+        super(
+                group,
+                item,
+                new ItemStack[] {
+                    null,
+                    null,
+                    null,
+                    new ItemStack(Material.SMOOTH_STONE_SLAB),
+                    new ItemStack(Material.STONECUTTER),
+                    new ItemStack(Material.SMOOTH_STONE_SLAB),
+                    null,
+                    new ItemStack(Material.IRON_BLOCK),
+                    null
+                },
+                BlockFace.SELF);
         // @formatter:on
 
         for (Material log : Tag.LOGS.getValues()) {
@@ -65,6 +76,8 @@ public class TableSaw extends MultiBlockMachine {
             displayedRecipes.add(new ItemStack(plank));
             displayedRecipes.add(new ItemStack(Material.STICK, 4));
         }
+
+        addItemSetting(canUseSlimefunItems);
     }
 
     /**
@@ -72,10 +85,10 @@ public class TableSaw extends MultiBlockMachine {
      * The result is wrapped by an {@link Optional}.
      * <p>
      * {@literal Material.OAK_LOG} for example will return {@literal Material.OAK_PLANKS}.
-     * 
+     *
      * @param log
      *            The log type.
-     * 
+     *
      * @return An {@link Optional} containing the corresponding plank type (or an empty {@link Optional})
      */
     private @Nonnull Optional<Material> getPlanks(@Nonnull Material log) {
@@ -101,6 +114,11 @@ public class TableSaw extends MultiBlockMachine {
     public void onInteract(@Nonnull Player p, @Nonnull Block b) {
         ItemStack item = p.getInventory().getItemInMainHand();
         ItemStack output = getOutputFromMaterial(item.getType());
+
+        if (!canUseSlimefunItems.getValue() && SlimefunItem.getByItem(item) != null) {
+            Slimefun.getLocalization().sendMessage(p, "machines.TABLE_SAW.no-slimefun-item", true);
+            return;
+        }
 
         if (output == null) {
             Slimefun.getLocalization().sendMessage(p, "machines.wrong-item", true);

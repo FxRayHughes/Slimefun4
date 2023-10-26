@@ -39,6 +39,11 @@ commands:
     running: '&7Running debug mode with test: &6%test%'
     disabled: '&7Disabled debug mode.'
 
+  reload:
+    description: "Reload config file"
+    reload-success: "&aReloaded config file successfully."
+    reload-failed: "&cReload config failed, you may need restart server to apply change, see console for more info."
+
 placeholderapi:
   profile-loading: 'Loading...'
 
@@ -97,7 +102,6 @@ guide:
     translations:
       name: '&aIs something missing?'
       lore: 'Click to add your own translation'
-
   options:
     learning-animation:
       enabled:
@@ -186,9 +190,6 @@ messages:
     select: 'Select this recipe'
     temporarily-disabled: '&eThis Auto-Crafter was temporarily disabled. You can re-enable it at any time!'
     re-enabled: '&eThis Auto-Crafter was re-enabled!'
-    recipe-unavailable: |
-      &cThis item is either disabled on your server, or you have not unlocked it yet.
-      &7Try crafting the item if you have not done this before to unlock the recipe.
 
     tooltips:
       enabled:
@@ -431,6 +432,24 @@ android:
     rating:
       own: '&4You cannot rate your own script!'
       already: '&4You have already left a Rating for this script!'
+
+  access-manager:
+    title: '&bAndroid Access Manager'
+    subtitle: '&8\u21E8 &7Click to open the Access Manager'
+
+    menu:
+      add-player-title: '&aAdd a trusted player'
+      add-player: '&aLeft Click > Add player'
+      delete-player: '&cLeft Click > Delete player'
+
+    messages:
+      input: 'Please input the player name you want to add.'
+      cannot-find-player: '&cCannot find specific player: %player%'
+      is-trusted-player: '&aPlayer %player% is already trusted!'
+      is-not-trusted-player: "&cPlayer %player% isn't a trusted player!"
+      cannot-add-yourself: '&cYou cannot add yourself!'
+      add-success: '&aAdded trusted player %player% successfully.'
+      delete-success: '&aDeleted trusted player %player% successfully.'
 
 languages:
   default: 'Server-Default'

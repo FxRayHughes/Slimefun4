@@ -1,12 +1,6 @@
 package io.github.thebusybiscuit.slimefun4.implementation.items.electric;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.bukkit.block.Block;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.ItemStack;
-
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -17,16 +11,19 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockPlaceHandler;
 import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNet;
 import io.github.thebusybiscuit.slimefun4.implementation.handlers.SimpleBlockBreakHandler;
-
-import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
+import org.bukkit.block.Block;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * The {@link EnergyRegulator} is a special type of {@link SlimefunItem} which serves as the heart of every
  * {@link EnergyNet}.
- * 
+ *
  * @author TheBusyBiscuit
- * 
+ *
  * @see EnergyNet
  * @see EnergyNetComponent
  *
@@ -57,9 +54,8 @@ public class EnergyRegulator extends SlimefunItem implements HologramOwner {
 
             @Override
             public void onPlayerPlace(BlockPlaceEvent e) {
-                updateHologram(e.getBlock(), "&7Connecting...");
+                updateHologram(e.getBlock(), "&7连接中...");
             }
-
         };
     }
 
@@ -75,7 +71,7 @@ public class EnergyRegulator extends SlimefunItem implements HologramOwner {
             }
 
             @Override
-            public void tick(Block b, SlimefunItem item, Config data) {
+            public void tick(Block b, SlimefunItem item, SlimefunBlockData data) {
                 EnergyRegulator.this.tick(b);
             }
         });
@@ -85,5 +81,4 @@ public class EnergyRegulator extends SlimefunItem implements HologramOwner {
         EnergyNet network = EnergyNet.getNetworkFromLocationOrCreate(b.getLocation());
         network.tick(b);
     }
-
 }

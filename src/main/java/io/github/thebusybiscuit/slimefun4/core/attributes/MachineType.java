@@ -3,10 +3,9 @@ package io.github.thebusybiscuit.slimefun4.core.attributes;
 import javax.annotation.Nonnull;
 
 public enum MachineType {
-
-    CAPACITOR("Capacitor"),
-    GENERATOR("Generator"),
-    MACHINE("Machine");
+    CAPACITOR("电容"),
+    GENERATOR("发电机"),
+    MACHINE("机器");
 
     private final String suffix;
 
@@ -18,5 +17,4 @@ public enum MachineType {
     public String toString() {
         return suffix;
     }
-
 }
